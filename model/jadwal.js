@@ -1,49 +1,52 @@
 var pool = require('./databaseConfig.js');
 var jadwalDB = { 
-    getJadwal: function x(callback) { 
+    getJadwal: function (Email, callback) { 
         pool.getConnection(function (err, conn) {
             if (err) { 
                 console.log(err); 
                 return callback(err, null);
             }
             else {
-                console.log("Connected!");
-                var sql = 'SELECT * FROM jadwal';
-                conn.query(sql, function (err, result) {
-                    conn.release();
-                     if (err) {
-                        console.log(err);
-                        return callback(err, null);
-                    } else {
-                        console.log(result);
-                        return callback(null, result);
-                    }
-                });
+                var getPenggunaKlub = 'SELECT IDKlub FROM pengguna WHERE Email=?';
+                conn.query(getPenggunaKlub, [Email], function(err, idklub){
+                    var sql = 'SELECT * FROM jadwal WHERE IDKlub=?';
+                    conn.query(sql, [idklub[0]['IDKlub']], function (err, result) {
+                        conn.release();
+                         if (err) {
+                            console.log(err);
+                            return callback(err, null);
+                        } else {
+                            return callback(null, result);
+                        }
+                    });
+                })
             }
         });
     }
 
     ,
-    tambahJadwalLatihan: function (Tanggal, Waktu, Deskripsi, callback){
+    tambahJadwalLatihan: function (Tanggal, Waktu, Deskripsi, Email, callback){
         pool.getConnection(function(err, conn){
             if (err){
                 console.log(err);
                 return callback(err,null);
             }
             else {
-                console.log("Connected!");
-                var sql = 'INSERT INTO jadwal (JenisJadwal, Tanggal, Waktu, Deskripsi) values ("Jadwal Latihan",?,?,?)';
-                conn.query(sql,[Tanggal, Waktu, Deskripsi], function (err, result){
-                    conn.release();
-                    if (err){
-                        console.log(err);
-                        return callback(err,null);
-                    }
-                    else {
-                        console.log(result);
-                        return callback(null, result);
-                    }
-                });
+                var getIdKlub = 'SELECT IDKlub From pengguna WHERE Email=?';
+                conn.query(getIdKlub, [Email], function(error, idklub){
+                    var sql = 'INSERT INTO jadwal (JenisJadwal, Tanggal, Waktu, Deskripsi, IDKlub ) values ("Jadwal Latihan",?,?,?,?)';
+                    conn.query(sql, [Tanggal, Waktu, Deskripsi, idklub[0]['IDKlub']], function (err, result){
+                        conn.release();
+                        if (err){
+                            console.log(err);
+                            return callback(err,null);
+                        }
+                        else {
+                            console.log(result);
+                            return callback(null, result);
+                        }
+                    });
+                })
             }
         });
     }

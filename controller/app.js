@@ -41,9 +41,9 @@ app.get('/api/cekstatus/:firebaseuid', function(req, res) {
 
 
 //routing get data pengguna berdasarkan nama
-app.get('/api/NamaPengguna/:Nama/pengguna', function (req, res) {
+app.get('/api/NamaPengguna/:Nama', function (req, res) {
     var Nama = req.params.Nama;
-    pengguna.getPenggunabyNama(Nama,function(err, result){
+    pengguna.getPenggunabyNama(Nama, function(err, result){
         if (!err) {
             res.send(result);
         }
@@ -56,8 +56,9 @@ app.get('/api/NamaPengguna/:Nama/pengguna', function (req, res) {
 
 
 //routing get data pengguna
-app.get('/api/pengguna', function (req, res) {
-    pengguna.getPengguna(function(err, result){
+app.get('/api/pengguna/:Email', function (req, res) {
+    var Email = req.params.Email;
+    pengguna.getPenggunabyEmail(Email, function(err, result){
         if (!err) {
             res.send(result);
         }
@@ -75,10 +76,11 @@ app.post('/api/ketua', urlencodedParser, jsonParser, function (req,res){
     var Email = req.body.Email;
     var FirebaseUID = req.body.FirebaseUID;
     var Umur = req.body.Umur;
-    pengguna.daftarKetua("Ketua Klub", Nama, Email, Umur, FirebaseUID, function(err, result){
+    var NamaKlub = req.body.NamaKlub;
+    pengguna.daftarKetua("Ketua Klub", Nama, Email, Umur, FirebaseUID, NamaKlub, function(err, result){
         if(!err){
             console.log(result);
-            res.send(result.affectedRows + ' record ditamb ahkan');
+            res.send(result.affectedRows + ' record ditambahkan');
         }
         else {
             console.log(err);
@@ -88,17 +90,36 @@ app.post('/api/ketua', urlencodedParser, jsonParser, function (req,res){
 });
 
 
-
-
-//routing tambah pengguna
-app.post('/api/pengguna', urlencodedParser, jsonParser, function (req,res){
+//routing daftar anggota atau pelatih
+app.post('/api/anggotapelatih', urlencodedParser, jsonParser, function (req,res){
     var Status = req.body.Status;
     var Nama = req.body.Nama;
     var Email = req.body.Email;
+    var FirebaseUID = req.body.FirebaseUID;
     var Umur = req.body.Umur;
+    var NamaKlub = req.body.NamaKlub;
+    pengguna.daftarAnggotaPelatih(Status, Nama, Email, Umur, FirebaseUID, NamaKlub, function(err, result){
+        if(!err){
+            console.log(result);
+            res.send(result.affectedRows + ' record ditambahkan');
+        }
+        else {
+            console.log(err);
+            res.status(500).send(err.code);
+        }
+    });
+});
+
+
+//routing tambah pengguna
+app.post('/api/tambahpengguna', urlencodedParser, jsonParser, function (req,res){
+    var Status = req.body.Status;
+    var Nama = req.body.Nama;
+    var Email = req.body.Email;
+    //var Umur = req.body.Umur;
     var FirebaseUID = req.body.FirebaseUID;
 
-    pengguna.tambahPengguna(Status, Nama, Email, Umur, FirebaseUID, function(err, result){
+    pengguna.tambahPengguna(Status, Nama, Email, FirebaseUID, function(err, result){
         if(!err){
             console.log(result);
             res.send(result.affectedRows + ' record ditambahkan');
@@ -134,7 +155,22 @@ app.post('/api/pengguna/:Email', urlencodedParser, jsonParser, function(req,res)
     }); 
 });
 
+//routing edit data ketua atau pelatih
+app.post('/api/editdataketuapelatih/:Email', urlencodedParser, jsonParser, function(req,res){
+    var Nama = req.body.Nama;
+    var Umur = req.body.Umur;
+    var Email = req.params.Email;
 
+    pengguna.editDataKetuaPelatih(Nama, Umur, Email, function(err,result){
+        if(!err){
+            console.log(result);
+            res.send(result.affectedRows + ' record diubah');
+        } else {
+            console.log(err);
+            res.status(500).send(err.code);
+        }
+    }); 
+});
 
 //routing hapus pengguna
 app.delete('/api/pengguna/:Email', function (req, res){
@@ -155,8 +191,9 @@ app.delete('/api/pengguna/:Email', function (req, res){
 
 
 //routing get data jadwal
-app.get('/api/jadwal', function (req, res) {
-    jadwal.getJadwal(function(err, result){
+app.get('/api/jadwal/:email', function (req, res) {
+    var email = req.params.email;
+    jadwal.getJadwal(email, function(err, result){
         if (!err) {
             res.send(result);
         }
@@ -173,8 +210,9 @@ app.post('/api/jadwal', urlencodedParser, jsonParser, function (req,res){
     var Tanggal = req.body.Tanggal;
     var Waktu = req.body.Waktu;
     var Deskripsi = req.body.Deskripsi;
+    var Email = req.body.Email;
 
-    jadwal.tambahJadwalLatihan(Tanggal, Waktu, Deskripsi, function(err, result){
+    jadwal.tambahJadwalLatihan(Tanggal, Waktu, Deskripsi, Email, function(err, result){
         if(!err){
             console.log(result);
             res.send(result.affectedRows + ' record ditambahkan');
@@ -280,9 +318,25 @@ app.delete('/api/j_ambilnilai/:ID_Jadwal', function (req, res){
 
 
 
+//routing get data nilai berdasarkan email
+app.get('/api/nilaiku/:Email', function (req, res) {
+    var Email = req.params.Email;
+    nilai.getNilai(Email, function(err, result){
+        if (!err) {
+            res.send(result);
+        }
+        else {
+            console.log(err);
+            res.status(500).send(err);
+        }
+    });
+});
+
+
 //routing get data nilai
-app.get('/api/nilai', function (req, res) {
-    nilai.getNilai(function(err, result){
+app.get('/api/datanilai', function (req, res) {
+   //var Email = req.params.Email;
+    nilai.getDataNilai(function(err, result){
         if (!err) {
             res.send(result);
         }
@@ -303,8 +357,9 @@ app.post('/api/nilai', urlencodedParser, jsonParser, function (req,res){
     var TotalRambahan4 = req.body.TotalRambahan4;
     var TotalRambahan5 = req.body.TotalRambahan5;
     var TotalRambahan6 = req.body.TotalRambahan6;
+    var EmailPengguna = req.body.EmailPengguna;
 
-    nilai.tambahNilai(Tanggal, TotalRambahan1, TotalRambahan2, TotalRambahan3, TotalRambahan4, TotalRambahan5, TotalRambahan6, function(err, result){
+    nilai.tambahNilai(Tanggal, TotalRambahan1, TotalRambahan2, TotalRambahan3, TotalRambahan4, TotalRambahan5, TotalRambahan6, EmailPengguna, function(err, result){
         if(!err){
             console.log(result);
             res.send(result.affectedRows + ' record ditambahkan');
@@ -317,9 +372,10 @@ app.post('/api/nilai', urlencodedParser, jsonParser, function (req,res){
 })
 
 
-//routing get data klub
-app.get('/api/klub', function (req, res) {
-    klub.getKlub(function(err, result){
+
+app.get('/api/nilaiku/tanggal/:email', urlencodedParser, jsonParser, function(req,res){
+    var email = req.params.email;
+    nilai.getTanggal(email, function(err,result){
         if (!err) {
             res.send(result);
         }
@@ -329,6 +385,22 @@ app.get('/api/klub', function (req, res) {
         }
     });
 });
+
+
+//routing get data klub
+app.get('/api/dataklub/:email', function (req, res) {
+    var email = req.params.email;
+    klub.getDataKlub(email, function(err, result){
+        if (!err) {
+            res.send(result);
+        }
+        else {
+            console.log(err);
+            res.status(500).send(err);
+        }
+    });
+});
+
 
 
 //routing tambah klub
@@ -350,11 +422,11 @@ app.post('/api/klub', urlencodedParser, jsonParser, function (req,res){
 
 
 //routing edit data klub
-app.post('/api/klub/:ID_Klub', urlencodedParser, jsonParser, function(req,res){
+app.post('/api/klub/:IDKlub', urlencodedParser, jsonParser, function(req,res){
     var NamaKlub = req.body.NamaKlub;
-    var ID_Klub = req.params.ID_Klub;
+    var IDKlub = req.params.IDKlub;
 
-    klub.editKlub(NamaKlub, ID_Klub, function(err,result){
+    klub.editKlub(NamaKlub, IDKlub, function(err,result){
         if(!err){
             console.log(result);
             res.send(result.affectedRows + ' record diubah');
@@ -368,10 +440,10 @@ app.post('/api/klub/:ID_Klub', urlencodedParser, jsonParser, function(req,res){
 
 
 //routing hapus klub
-app.delete('/api/klub/:ID_Klub', function (req, res){
-    var ID_Klub = req.params.ID_Klub;
+app.delete('/api/klub/:', function (req, res){
+    var IDKlub = req.params.IDKlub;
 
-    klub.hapusKlub(ID_Klub, function(err,result){
+    klub.hapusKlub(IDKlub, function(err,result){
         if (!err){
             console.log(result);
             res.send(result.affectedRows + ' record dihapus');
