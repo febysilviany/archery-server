@@ -1,30 +1,56 @@
 var pool = require('./databaseConfig.js');
 var klubDB = { 
-    getKlub: function(callback) { 
+    getAnggotaKlub: function (Email, callback) { 
         pool.getConnection(function (err, conn) {
             if (err) { 
                 console.log(err); 
                 return callback(err, null);
             }
             else {
-                console.log("Connected!");
-                var sql = 'SELECT * FROM klub';
-                conn.query(sql, function (err, result) {
-                    conn.release();
-                     if (err) {
-                        console.log(err);
-                        return callback(err, null);
-                    } else {
-                        console.log(result);
-                        return callback(null, result);
-                    }
-                });
+                var getPenggunaKlub = 'SELECT IDKlub FROM pengguna WHERE Email=?';
+                conn.query(getPenggunaKlub, [Email], function(err, idklub){
+                    var sql = 'SELECT * FROM pengguna WHERE IDKlub=? and Status="Anggota Klub"';
+                    conn.query(sql, [idklub[0]['IDKlub']], function (err, result) {
+                        conn.release();
+                         if (err) {
+                            console.log(err);
+                            return callback(err, null);
+                        } else {
+                            return callback(null, result);
+                        }
+                    });
+                })
             }
         });
     }
     ,
 
+    getPelatihKlub: function (Email, callback) { 
+        pool.getConnection(function (err, conn) {
+            if (err) { 
+                console.log(err); 
+                return callback(err, null);
+            }
+            else {
+                var getPenggunaKlub = 'SELECT IDKlub FROM pengguna WHERE Email=?';
+                conn.query(getPenggunaKlub, [Email], function(err, idklub){
+                    var sql = 'SELECT * FROM pengguna WHERE IDKlub=? and Status="Pelatih"';
+                    conn.query(sql, [idklub[0]['IDKlub']], function (err, result) {
+                        conn.release();
+                         if (err) {
+                            console.log(err);
+                            return callback(err, null);
+                        } else {
+                            return callback(null, result);
+                        }
+                    });
+                })
+            }
+        });
+    }
 
+
+    ,
     getDataKlub: function (Email, callback) { 
         pool.getConnection(function (err, conn) {
             if (err) { 
@@ -48,7 +74,6 @@ var klubDB = {
             }
         });
     }
-
     ,
     
     
@@ -100,30 +125,6 @@ var klubDB = {
     //     });
     // } 
 
-    //,
-    // tambahKlub: function (NamaKlub, callback){
-    //     pool.getConnection(function(err, conn){
-    //         if (err){
-    //             console.log(err);
-    //             return callback(err,null);
-    //         }
-    //         else {
-    //             console.log("Connected!");
-    //             var sql = 'INSERT INTO klub (NamaKlub) values (?)';
-    //             conn.query(sql,[NamaKlub], function (err, result){
-    //                 conn.release();
-    //                 if (err){
-    //                     console.log(err);
-    //                     return callback(err,null);
-    //                 }
-    //                 else {
-    //                     console.log(result);
-    //                     return callback(null, result);
-    //                 }
-    //             });
-    //         }
-    //     });
-    // }
 
 };
 module.exports = klubDB

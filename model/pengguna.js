@@ -1,7 +1,15 @@
 var pool = require('./databaseConfig.js');
 var uuid = require('uuid/v4');
+var admin = require('firebase-admin');
+
+var serviceAccount = require("../serviceAccountKey.json");
+admin.initializeApp({
+	credential: admin.credential.cert(serviceAccount),
+	databaseURL: "https://acheryclubscore.firebaseio.com"
+});
+
+
 var penggunaDB = {
-    
     cekStatus: function (FirebaseUID, callback) { 
         pool.getConnection(function (err, conn) {
             if (err) { 
@@ -13,6 +21,30 @@ var penggunaDB = {
                 console.log(FirebaseUID);
                 var sql = 'SELECT Status FROM pengguna WHERE FirebaseUID=?';
                 conn.query(sql, [FirebaseUID], function (err, result) {
+                    conn.release();
+                     if (err) {
+                        console.log(err);
+                        return callback(err, null);
+                    } else {
+                        console.log(result);
+                        return callback(null, result);
+                    }
+                });
+            }
+        });
+    },
+
+
+    cekStatusPenggunabyEmail: function (Email, callback) { 
+        pool.getConnection(function (err, conn) {
+            if (err) { 
+                console.log(err); 
+                return callback(err, null);
+            }
+            else {
+                console.log("Connected!");
+                var sql = 'SELECT Status FROM pengguna WHERE Email=?';
+                conn.query(sql, [Email], function (err, result) {
                     conn.release();
                      if (err) {
                         console.log(err);
@@ -52,7 +84,7 @@ var penggunaDB = {
 
 
     
-    getPenggunabyEmail: function (Email, callback) { 
+    getPengguna: function (Email, callback) { 
         pool.getConnection(function (err, conn) {
             if (err) { 
                 console.log(err); 
@@ -77,30 +109,18 @@ var penggunaDB = {
     ,
 
     
-    tambahPengguna: function (Status, Nama, Email, FirebaseUID, callback){
+    tambahAnggota: function (EmailKetua, Status, Nama, Email, Kelas, FirebaseUID, callback){
         pool.getConnection(function(err, conn){
             if (err){
                 console.log(err);
                 return callback(err,null);
             }
             else {
-                // console.log("Connected!");
-                // var sql = 'INSERT INTO pengguna (Status, Nama, Email, Umur, FirebaseUID) values (?,?,?,?,?)';
-                // conn.query(sql,[Status, Nama, Email,Umur, FirebaseUID], function (err, result){
-                //     conn.release();
-                //     if (err){
-                //         console.log(err);
-                //         return callback(err,null);
-                //     }
-                //     else {
-                //         console.log(result);
-                //         return callback(null, result);
-                //     }
-                // });
                 var getIdKlub = 'SELECT IDKlub From pengguna WHERE Email=?';
-                conn.query(getIdKlub, [Email], function(error, idklub){
-                    var sql = 'INSERT INTO pengguna (Status, Nama, Email,FirebaseUID, IDKlub) values (?,?,?,?,?)';
-                    conn.query(sql, [Status, Nama, Email, FirebaseUID, idklub[0]['IDKlub']], function (err, result){
+                conn.query(getIdKlub, [EmailKetua], function(error, idklub){
+                    console.log('idklub', idklub[0]);
+                    var sql = 'INSERT INTO pengguna (Status, Nama, Email, Kelas, FirebaseUID, IDKlub) values (?,?,?,?,?,?)';
+                    conn.query(sql, [Status, Nama, Email, Kelas, FirebaseUID, idklub[0]['IDKlub']], function (err, result){
                         conn.release();
                         if (err){
                             console.log(err);
@@ -135,12 +155,21 @@ var penggunaDB = {
                     else {
                         var sqlKlub = 'INSERT INTO klub (IDKlub, NamaKlub, Email) values (?,?,?)';
                         conn.query(sqlKlub, [IDKlub, NamaKlub, Email], function (err, res){
-                            conn.release();
                             if (err){
                                 console.log(err);
                                 return callback(err,null);
                             } else {
-                                return callback(null, res);
+                                var sqlKelas = 'INSERT INTO kelas (Kelas, MinimumNilai, IDKlub) values (?,?,?)';
+                                conn.query(sqlKelas,["[5,10,15,20,30,40,50,60,70]", "[324,324,324,324,324,324,324,324,324]", IDKlub], function(err, res) {
+                                    conn.release();
+                                    if(err) {
+                                        console.log(err);
+                                        return callback(err,null);
+                                    } else {
+                                        console.log(err);
+                                        return callback(err,null);
+                                    }
+                                })
                             }  
                         });
                     }
@@ -184,7 +213,7 @@ var penggunaDB = {
 
 
     ,
-    editDataDiri: function (Nama, Password, Umur, TinggiBadan, JenisBusur, PanjangBusur, KekuatanBusur, Email, callback){
+    editDataDiri: function (Nama, Umur, TinggiBadan, JenisBusur, PanjangBusur, KekuatanBusur, Email, callback){
         pool.getConnection(function(err,conn){
             if (err){
                 console.log(err);
@@ -192,9 +221,8 @@ var penggunaDB = {
             }
             else {
                 console.log("Connected!");
-                console.log(Nama+", "+Password+", "+Umur+", "+TinggiBadan+", "+JenisBusur+", "+PanjangBusur+", "+KekuatanBusur+", "+Email)
-                var sql = 'UPDATE pengguna SET Nama=?, Password=?, Umur=?, TinggiBadan=?, JenisBusur=?, PanjangBusur=?, KekuatanBusur=? WHERE Email=?';
-                conn.query(sql, [Nama, Password, Umur, TinggiBadan, JenisBusur, PanjangBusur, KekuatanBusur, Email], function (err, result){
+                var sql = 'UPDATE pengguna SET Nama=?,Umur=?, TinggiBadan=?, JenisBusur=?, PanjangBusur=?, KekuatanBusur=? WHERE Email=?';
+                conn.query(sql, [Nama, Umur, TinggiBadan, JenisBusur, PanjangBusur, KekuatanBusur, Email], function (err, result){
                     conn.release();
                     if(err){
                         console.log(err);
@@ -233,8 +261,6 @@ var penggunaDB = {
             }
         });
     }
-
-
     ,
     hapusPengguna: function (Email, callback){
         pool.getConnection(function (err, conn){
@@ -243,16 +269,21 @@ var penggunaDB = {
                 return callback(err, null);
             }
             else {
-                console.log("Connected!");
-                var sql = 'DELETE FROM pengguna WHERE Email=?';
-                conn.query(sql, [Email], function(err, result){
-                    conn.release();
+                var sql = "SELECT * FROM pengguna WHERE Email=?";
+                conn.query(sql, [Email], function(err, pengguna){
                     if (err){
-                        console.log(err);
                         return callback(err, null);
                     } else {
-                        console.log(result);
-                        return callback (null, result);
+                        var sql2 = "DELETE FROM pengguna WHERE Email=?";
+                        var uid = pengguna[0]['FirebaseUID'];
+                        conn.query(sql2, [Email], function(err, result ){
+                            conn.release();
+                            admin.auth().deleteUser(uid).then(res => {
+                                return callback(null, res);
+                            }).catch(err => {
+                                return callback(null, err)
+                            })
+                        })
                     }
                 });
             }
